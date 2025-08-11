@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 6. 更新UserMapper.xml，添加新的方法 -->
+<mapper namespace="com.dating.mapper.UserMapper">
+
+    <resultMap id="UserResultMap" type="com.dating.entity.User">
+        <id property="id" column="id"/>
+        <result property="phone" column="phone"/>
+        <result property="username" column="username"/>
+        <result property="nickname" column="nickname"/>
+        <result property="avatar" column="avatar"/>
+        <result property="gender" column="gender"/>
+        <result property="birthday" column="birthday"/>
+        <result property="city" column="city"/>
+        <result property="profession" column="profession"/>
+        <result property="introduction" column="introduction"/>
+        <result property="status" column="status"/>
+        <result property="realNameVerified" column="real_name_verified"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+<!--    <select id="findByPhone" resultMap="UserResultMap">-->
+<!--        SELECT * FROM users WHERE phone = #{phone} AND status != 3-->
+<!--    </select>-->
+
+<!--    <select id="findById" resultMap="UserResultMap">-->
+<!--        SELECT * FROM users WHERE id = #{id} AND status != 3-->
+<!--    </select>-->
+
+<!--    <insert id="insert" useGeneratedKeys="true" keyProperty="id">-->
+<!--        INSERT INTO users (phone, username, nickname, avatar, gender, birthday,-->
+<!--                           city, profession, introduction, status, real_name_verified)-->
+<!--        VALUES (#{phone}, #{username}, #{nickname}, #{avatar}, #{gender}, #{birthday},-->
+<!--                #{city}, #{profession}, #{introduction}, #{status}, #{realNameVerified})-->
+<!--    </insert>-->
+
+<!--    <update id="updateById">-->
+<!--        UPDATE users-->
+<!--        SET nickname = #{nickname},-->
+<!--            avatar = #{avatar},-->
+<!--            gender = #{gender},-->
+<!--            birthday = #{birthday},-->
+<!--            city = #{city},-->
+<!--            profession = #{profession},-->
+<!--            introduction = #{introduction},-->
+<!--            updated_at = CURRENT_TIMESTAMP-->
+<!--        WHERE id = #{id}-->
+<!--    </update>-->
+
+<!--    <update id="updateStatus">-->
+<!--        UPDATE users SET status = #{status}, updated_at = CURRENT_TIMESTAMP WHERE id = #{id}-->
+<!--    </update>-->
+
+<!--    <select id="findNearbyUsers" resultMap="UserResultMap">-->
+<!--        SELECT * FROM users-->
+<!--        WHERE id != #{userId}-->
+<!--          AND gender = #{gender}-->
+<!--          AND city = #{city}-->
+<!--          AND status = 1-->
+<!--          AND id NOT IN (-->
+<!--            SELECT target_user_id FROM user_matches-->
+<!--            WHERE user_id = #{userId}-->
+<!--            )-->
+<!--        ORDER BY created_at DESC-->
+<!--            LIMIT #{limit}-->
+<!--    </select>-->
+
+<!--    <select id="findAllUsers" resultMap="UserResultMap">-->
+<!--        SELECT * FROM users-->
+<!--        WHERE status != 3-->
+<!--        ORDER BY created_at DESC-->
+<!--            LIMIT #{offset}, #{limit}-->
+<!--    </select>-->
+
+<!--    <select id="countUsers" resultType="int">-->
+<!--        SELECT COUNT(*) FROM users WHERE status != 3-->
+<!--    </select>-->
+
+    <!-- 插入用户 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (
+            phone, username, nickname, avatar, gender,
+            birthday, city, profession, introduction,
+            status, real_name_verified
+        ) VALUES (
+                     #{phone}, #{username}, #{nickname}, #{avatar}, #{gender},
+                     #{birthday}, #{city}, #{profession}, #{introduction},
+                     #{status}, #{realNameVerified}
+                 )
+    </insert>
+
+    <!-- 根据ID查询用户 -->
+    <select id="findById" resultType="com.dating.entity.User">
+        SELECT
+            id, phone, username, nickname, avatar, gender,
+            birthday, city, profession, introduction,
+            status, real_name_verified, created_at, updated_at
+        FROM users
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据手机号查询用户 -->
+    <select id="findByPhone" resultType="com.dating.entity.User">
+        SELECT
+            id, phone, username, nickname, avatar, gender,
+            birthday, city, profession, introduction,
+            status, real_name_verified, created_at, updated_at
+        FROM users
+        WHERE phone = #{phone}
+    </select>
+
+    <!-- 检查用户名是否存在 -->
+    <select id="countByUsername" resultType="int">
+        SELECT COUNT(*)
+        FROM users
+        WHERE username = #{username}
+    </select>
+
+    <!-- 更新用户信息 -->
+    <update id="updateById">
+        UPDATE users SET
+                         username = #{username},
+                         nickname = #{nickname},
+                         avatar = #{avatar},
+                         gender = #{gender},
+                         birthday = #{birthday},
+                         city = #{city},
+                         profession = #{profession},
+                         introduction = #{introduction},
+                         updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新用户状态 -->
+    <update id="updateStatus">
+        UPDATE users SET
+                         status = #{status},
+                         updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新实名认证状态 -->
+    <update id="updateRealNameVerified">
+        UPDATE users SET
+                         real_name_verified = #{realNameVerified},
+                         updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+</mapper>

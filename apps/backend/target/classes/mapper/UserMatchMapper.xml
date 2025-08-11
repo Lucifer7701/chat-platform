@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 3. UserMatchMapper.xml -->
+<mapper namespace="com.dating.mapper.UserMatchMapper">
+
+    <resultMap id="UserMatchResultMap" type="com.dating.entity.UserMatch">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="targetUserId" column="target_user_id"/>
+        <result property="action" column="action"/>
+        <result property="isMutual" column="is_mutual"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_matches (user_id, target_user_id, action, is_mutual)
+        VALUES (#{userId}, #{targetUserId}, #{action}, #{isMutual})
+    </insert>
+
+    <select id="findByUserAndTarget" resultMap="UserMatchResultMap">
+        SELECT * FROM user_matches
+        WHERE user_id = #{userId} AND target_user_id = #{targetUserId}
+    </select>
+
+    <update id="updateById">
+        UPDATE user_matches
+        SET action = #{action}, is_mutual = #{isMutual}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateMutualStatus">
+        UPDATE user_matches
+        SET is_mutual = #{isMutual}
+        WHERE user_id = #{userId} AND target_user_id = #{targetUserId}
+    </update>
+
+    <select id="findMutualMatches" resultMap="UserMatchResultMap">
+        SELECT * FROM user_matches
+        WHERE user_id = #{userId} AND is_mutual = 1 AND action = 1
+        ORDER BY created_at DESC
+    </select>
+
+    <delete id="deleteByUserId">
+        DELETE FROM user_matches
+        WHERE user_id = #{userId} OR target_user_id = #{userId}
+    </delete>
+
+    <!-- 清理孤立记录 -->
+    <delete id="deleteOrphanedRecords">
+        DELETE FROM user_matches
+        WHERE user_id NOT IN (
+            SELECT id FROM users WHERE status != 3
+            ) OR target_user_id NOT IN (
+        SELECT id FROM users WHERE status != 3
+            )
+    </delete>
+</mapper>
