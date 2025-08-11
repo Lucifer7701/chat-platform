@@ -9,8 +9,8 @@ import com.dating.service.OnlineStatusService;
 import com.dating.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import com.dating.config.SpringContextHolder;
 
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
@@ -29,13 +29,9 @@ import static com.dating.service.OnlineStatusService.USER_SESSIONS;
 public class ChatWebSocketServer {
 
 
-    @Autowired
     private ChatService chatService;
-    @Autowired
     private JwtUtil jwtUtils;
-    @Autowired
     private ObjectMapper objectMapper;
-    @Autowired
     private OnlineStatusService onlineStatusService;
 
     // 超时与心跳配置
@@ -69,6 +65,14 @@ public class ChatWebSocketServer {
                 }
             });
         }, PING_INTERVAL_SEC, PING_INTERVAL_SEC, TimeUnit.SECONDS);
+    }
+
+    public ChatWebSocketServer() {
+        // 手动从 Spring 容器获取 Bean，解决 @ServerEndpoint 环境下注入问题
+        this.chatService = SpringContextHolder.getBean(ChatService.class);
+        this.jwtUtils = SpringContextHolder.getBean(JwtUtil.class);
+        this.objectMapper = SpringContextHolder.getBean(ObjectMapper.class);
+        this.onlineStatusService = SpringContextHolder.getBean(OnlineStatusService.class);
     }
 
 
