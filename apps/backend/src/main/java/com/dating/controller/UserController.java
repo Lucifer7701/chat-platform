@@ -77,6 +77,11 @@ public class UserController {
     @PostMapping("/register")
     public Result register(@Valid @RequestBody UserRegisterRequest request, HttpServletRequest httpRequest) {
         try {
+            // 性别校验（1-男 2-女）
+            if (request.getGender() == null || (request.getGender() != 1 && request.getGender() != 2)) {
+                return Result.error("请选择性别");
+            }
+
             // 验证手机号格式
             if (!isValidPhone(request.getPhone())) {
                 return Result.error("手机号格式不正确");

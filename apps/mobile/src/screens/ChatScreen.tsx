@@ -3,6 +3,7 @@ import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-nativ
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { buildWebSocketUrl, markAsRead } from '../utils/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -24,7 +25,9 @@ export default function ChatScreen({ route }: Props) {
     (async () => {
       const token = await AsyncStorage.getItem('token');
       if (!token) return;
-      const url = `ws://localhost:8080/ws/chat/${token}`;
+      // 进入会话后标记来自该联系人的未读为已读
+      try { await markAsRead(toUserId, token); } catch {}
+      const url = buildWebSocketUrl(`/ws/chat/${token}`);
       ws = new WebSocket(url);
       wsRef.current = ws;
 

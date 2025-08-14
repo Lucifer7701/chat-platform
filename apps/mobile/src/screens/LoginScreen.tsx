@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { post } from '../utils/api';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 
@@ -12,12 +13,7 @@ export default function LoginScreen({ navigation }: Props) {
 
   const onLogin = async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/user/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, password }),
-      });
-      const json = await res.json();
+      const json = await post<any>('/api/user/login', { phone, password });
       if (json.code !== 200) {
         Alert.alert('登录失败', json.message || '');
         return;

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { post } from '../utils/api';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 
@@ -10,15 +11,11 @@ export default function RegisterScreen({ navigation }: Props) {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [smsCode, setSmsCode] = useState('');
+  const [gender, setGender] = useState<1 | 2 | null>(null);
 
   const sendCode = async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/user/send-register-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone }),
-      });
-      const json = await res.json();
+      const json = await post<any>('/api/user/send-register-code', { phone });
       if (json.code !== 200) return Alert.alert('发送失败', json.message || '');
       Alert.alert('验证码', '已发送');
     } catch (e) {
@@ -28,12 +25,11 @@ export default function RegisterScreen({ navigation }: Props) {
 
   const register = async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/user/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, password, smsCode })
-      });
-      const json = await res.json();
+      if (!gender) {
+        Alert.alert('提示', '请选择性别');
+        return;
+      }
+      const json = await post<any>('/api/user/register', { phone, password, smsCode, gender });
       if (json.code !== 200) return Alert.alert('注册失败', json.message || '');
       const token = json.extraData?.token;
       if (token) {
@@ -58,6 +54,17 @@ export default function RegisterScreen({ navigation }: Props) {
         <TextInput style={[styles.input, { flex: 1 }]} placeholder="验证码" value={smsCode} onChangeText={setSmsCode} />
         <Button title="发送" onPress={sendCode} />
       </View>
+      <View style={styles.genderRow}>
+        <Text style={styles.label}>性别</Text>
+        <View style={styles.genderChoices}>
+          <TouchableOpacity style={[styles.choice, gender === 1 && styles.choiceActive]} onPress={() => setGender(1)}>
+            <Text style={[styles.choiceText, gender === 1 && styles.choiceTextActive]}>男</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.choice, gender === 2 && styles.choiceActive]} onPress={() => setGender(2)}>
+            <Text style={[styles.choiceText, gender === 2 && styles.choiceTextActive]}>女</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
       <Button title="注册" onPress={register} />
     </View>
   );
@@ -68,6 +75,13 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, marginBottom: 16, textAlign: 'center' },
   input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 8, marginBottom: 12 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  genderRow: { marginBottom: 12 },
+  label: { marginBottom: 8, color: '#333' },
+  genderChoices: { flexDirection: 'row', gap: 12 },
+  choice: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, borderWidth: 1, borderColor: '#ccc' },
+  choiceActive: { backgroundColor: '#ffeff3', borderColor: '#ff4d6d' },
+  choiceText: { color: '#333' },
+  choiceTextActive: { color: '#ff4d6d', fontWeight: '600' },
 });
 
 
