@@ -1,17 +1,20 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Image } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../App';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE, ApiResult, get } from '../utils/api';
-import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'ChatList'>;
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE, ApiResult, get, buildWebSocketUrl } from '../utils/api';
+import { useFocusEffect } from '@react-navigation/native';
+import Avatar from '../components/Avatar';
+
+type Props = {
+  navigation: any;
+};
 
 type Contact = {
   contactUserId: number;
   nickname: string;
   avatar?: string | null;
+  gender?: number;
   lastMessage?: string | null;
   lastMessageTime?: string | null;
   unreadCount?: number;
@@ -23,6 +26,7 @@ export default function ChatListScreen({ navigation }: Props) {
   const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
   const loadContacts = useCallback(async (isRefresh = false) => {
     try {
@@ -53,6 +57,8 @@ export default function ChatListScreen({ navigation }: Props) {
 
   useEffect(() => {
     loadContacts();
+    setupWebSocketListener();
+    return () => wsRef.current?.close();
   }, [loadContacts]);
 
   useFocusEffect(
@@ -62,6 +68,41 @@ export default function ChatListScreen({ navigation }: Props) {
     }, [loadContacts])
   );
 
+  const setupWebSocketListener = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) return;
+      
+      const url = buildWebSocketUrl(`/ws/chat/${token}`);
+      const ws = new WebSocket(url);
+      wsRef.current = ws;
+      
+      ws.onmessage = (ev) => {
+        try {
+          if (ev.data === 'PING') return;
+          const data = JSON.parse(ev.data);
+          
+          // 收到新消息时刷新聊天列表
+          if (data.type === 'message') {
+            loadContacts(true);
+          }
+        } catch (e) {
+          console.log('处理聊天列表WebSocket消息失败:', e);
+        }
+      };
+      
+      ws.onerror = (error) => {
+        console.log('聊天列表WebSocket错误:', error);
+      };
+      
+      ws.onclose = () => {
+        console.log('聊天列表WebSocket连接关闭');
+      };
+    } catch (e) {
+      console.log('建立聊天列表WebSocket连接失败:', e);
+    }
+  };
+
   const renderItem = ({ item }: { item: Contact }) => (
     <TouchableOpacity
       style={styles.item}
@@ -69,11 +110,7 @@ export default function ChatListScreen({ navigation }: Props) {
     >
       <View style={styles.row}>
         <View style={styles.avatarWrap}>
-          {item.avatar ? (
-            <Image source={{ uri: item.avatar.startsWith('http') ? item.avatar : `${API_BASE}${item.avatar}` }} style={styles.avatar} />
-          ) : (
-            <View style={[styles.avatar, styles.avatarPlaceholder]} />
-          )}
+          <Avatar avatar={item.avatar || undefined} gender={item.gender} size={40} />
           {item.online ? <View style={styles.dotOnline} /> : null}
         </View>
         <View style={styles.col}>

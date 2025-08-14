@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 
 @Data
 public class ChatMessageRequest {
+    private String tempId;        // 客户端临时ID
     private Long toUserId;
     private Integer messageType;
     private String content;

@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/user")
@@ -327,5 +329,168 @@ public class UserController {
             return phone;
         }
         return phone.substring(0, 3) + "****" + phone.substring(7);
+    }
+
+    /**
+     * 更新用户位置
+     */
+    @PostMapping("/update-location")
+    public Result updateLocation(@RequestBody LocationUpdateRequest request, HttpServletRequest httpRequest) {
+        try {
+            // 从Token中获取用户ID
+            String token = getTokenFromRequest(httpRequest);
+            if (StringUtils.isBlank(token)) {
+                return Result.error("未登录");
+            }
+
+            String userId = jwtUtil.getUserIdFromToken(token);
+            if (StringUtils.isBlank(userId)) {
+                return Result.error("Token无效");
+            }
+
+            // 更新位置
+            int result = userService.updateUserLocation(Long.valueOf(userId), request.getLatitude(), request.getLongitude());
+            if (result > 0) {
+                return Result.success("位置更新成功");
+            }
+
+            return Result.error("位置更新失败");
+        } catch (Exception e) {
+            log.error("更新用户位置异常：", e);
+            return Result.error("系统异常，请稍后重试");
+        }
+    }
+
+    /**
+     * 获取附近用户
+     */
+    @GetMapping("/nearby")
+    public Result getNearbyUsers(@RequestParam(defaultValue = "20") Integer limit, HttpServletRequest request) {
+        try {
+            // 从Token中获取用户ID
+            String token = getTokenFromRequest(request);
+            if (StringUtils.isBlank(token)) {
+                return Result.error("未登录");
+            }
+
+            String userId = jwtUtil.getUserIdFromToken(token);
+            if (StringUtils.isBlank(userId)) {
+                return Result.error("Token无效");
+            }
+
+            // 获取当前用户信息
+            User currentUser = userService.findById(Long.valueOf(userId));
+            if (currentUser == null || currentUser.getLatitude() == null || currentUser.getLongitude() == null) {
+                return Result.error("请先更新位置信息");
+            }
+
+            List<User> nearbyUsers = userService.findNearbyUsers(Long.valueOf(userId), 
+                    currentUser.getLatitude(), currentUser.getLongitude(), limit);
+            
+            // 脱敏处理
+            nearbyUsers.forEach(user -> user.setPhone(null));
+
+            return Result.success().put("users", nearbyUsers);
+        } catch (Exception e) {
+            log.error("获取附近用户异常：", e);
+            return Result.error("获取附近用户失败");
+        }
+    }
+
+    /**
+     * 获取同城用户
+     */
+    @GetMapping("/same-city")
+    public Result getSameCityUsers(@RequestParam(defaultValue = "20") Integer limit, HttpServletRequest request) {
+        try {
+            // 从Token中获取用户ID
+            String token = getTokenFromRequest(request);
+            if (StringUtils.isBlank(token)) {
+                return Result.error("未登录");
+            }
+
+            String userId = jwtUtil.getUserIdFromToken(token);
+            if (StringUtils.isBlank(userId)) {
+                return Result.error("Token无效");
+            }
+
+            // 获取当前用户信息
+            User currentUser = userService.findById(Long.valueOf(userId));
+            if (currentUser == null || StringUtils.isBlank(currentUser.getCity())) {
+                return Result.error("请先设置城市信息");
+            }
+
+            List<User> sameCityUsers = userService.findSameCityUsers(Long.valueOf(userId), 
+                    currentUser.getCity(), limit);
+            
+            // 脱敏处理
+            sameCityUsers.forEach(user -> user.setPhone(null));
+
+            return Result.success().put("users", sameCityUsers);
+        } catch (Exception e) {
+            log.error("获取同城用户异常：", e);
+            return Result.error("获取同城用户失败");
+        }
+    }
+
+    // 位置更新请求DTO
+    public static class LocationUpdateRequest {
+        private BigDecimal latitude;
+        private BigDecimal longitude;
+
+        public BigDecimal getLatitude() { return latitude; }
+        public void setLatitude(BigDecimal latitude) { this.latitude = latitude; }
+        public BigDecimal getLongitude() { return longitude; }
+        public void setLongitude(BigDecimal longitude) { this.longitude = longitude; }
+    }
+
+    /**
+     * 更新用户资料
+     */
+    @PostMapping("/update-profile")
+    public Result updateProfile(@RequestBody ProfileUpdateRequest request, HttpServletRequest httpRequest) {
+        try {
+            // 从Token中获取用户ID
+            String token = getTokenFromRequest(httpRequest);
+            if (StringUtils.isBlank(token)) {
+                return Result.error("未登录");
+            }
+
+            String userId = jwtUtil.getUserIdFromToken(token);
+            if (StringUtils.isBlank(userId)) {
+                return Result.error("Token无效");
+            }
+
+            // 更新用户资料
+            User user = new User();
+            user.setId(Long.valueOf(userId));
+            if (StringUtils.isNotBlank(request.getNickname())) {
+                user.setNickname(request.getNickname());
+            }
+            if (StringUtils.isNotBlank(request.getIntroduction())) {
+                user.setIntroduction(request.getIntroduction());
+            }
+
+            int result = userService.updateUserProfile(user);
+            if (result > 0) {
+                return Result.success("更新成功");
+            }
+
+            return Result.error("更新失败");
+        } catch (Exception e) {
+            log.error("更新用户资料异常：", e);
+            return Result.error("系统异常，请稍后重试");
+        }
+    }
+
+    // 资料更新请求DTO
+    public static class ProfileUpdateRequest {
+        private String nickname;
+        private String introduction;
+
+        public String getNickname() { return nickname; }
+        public void setNickname(String nickname) { this.nickname = nickname; }
+        public String getIntroduction() { return introduction; }
+        public void setIntroduction(String introduction) { this.introduction = introduction; }
     }
 }

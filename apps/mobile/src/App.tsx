@@ -5,13 +5,13 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
-import ChatListScreen from './screens/ChatListScreen';
+import MainTabs from './navigation/MainTabs';
 import ChatScreen from './screens/ChatScreen';
 
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
-  ChatList: undefined;
+  MainTabs: undefined;
   Chat: { toUserId: number };
 };
 
@@ -22,10 +22,26 @@ export default function App() {
     <SafeAreaProvider>
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Login">
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Register" component={RegisterScreen} />
-          <Stack.Screen name="ChatList" component={ChatListScreen} />
-          <Stack.Screen name="Chat" component={ChatScreen} />
+          <Stack.Screen 
+            name="Login" 
+            component={LoginScreen} 
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+            name="Register" 
+            component={RegisterScreen} 
+            options={{ title: '注册' }}
+          />
+          <Stack.Screen 
+            name="MainTabs" 
+            component={MainTabs} 
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+            name="Chat" 
+            component={ChatScreen} 
+            options={{ title: '聊天' }}
+          />
         </Stack.Navigator>
       </NavigationContainer>
       <StatusBar style="auto" />

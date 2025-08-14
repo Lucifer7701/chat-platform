@@ -8,6 +8,8 @@
     "moduleResolution": "node",
     "skipLibCheck": true,
     "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "types": ["react", "react-native", "node"]
   },
   "include": ["./src", "./index.tsx"],

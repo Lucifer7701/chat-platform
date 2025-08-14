@@ -149,4 +149,39 @@
                          updated_at = CURRENT_TIMESTAMP
         WHERE id = #{id}
     </update>
+
+    <!-- 更新用户位置 -->
+    <update id="updateLocation">
+        UPDATE users SET
+                         latitude = #{latitude},
+                         longitude = #{longitude},
+                         updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <!-- 获取附近用户 (按距离排序) -->
+    <select id="findNearbyUsers" resultMap="UserResultMap">
+        SELECT u.*,
+               (6371 * acos(cos(radians(#{latitude})) * cos(radians(u.latitude)) 
+                           * cos(radians(u.longitude) - radians(#{longitude})) 
+                           + sin(radians(#{latitude})) * sin(radians(u.latitude)))) AS distance
+        FROM users u
+        WHERE u.id != #{userId} 
+        AND u.status = 1
+        AND u.latitude IS NOT NULL 
+        AND u.longitude IS NOT NULL
+        ORDER BY distance
+        LIMIT #{limit}
+    </select>
+
+    <!-- 获取同城用户 -->
+    <select id="findSameCityUsers" resultMap="UserResultMap">
+        SELECT u.* FROM users u
+        WHERE u.id != #{userId} 
+        AND u.status = 1
+        AND u.city = #{city}
+        ORDER BY u.created_at DESC
+        LIMIT #{limit}
+    </select>
+
 </mapper>

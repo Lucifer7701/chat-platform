@@ -42,4 +42,19 @@ public interface UserMapper {
      * 更新实名认证状态
      */
     int updateRealNameVerified(@Param("id") Long id, @Param("realNameVerified") Integer realNameVerified);
+
+    /**
+     * 更新用户位置
+     */
+    int updateLocation(@Param("id") Long id, @Param("latitude") java.math.BigDecimal latitude, @Param("longitude") java.math.BigDecimal longitude);
+
+    /**
+     * 获取附近用户
+     */
+    List<User> findNearbyUsers(@Param("userId") Long userId, @Param("latitude") java.math.BigDecimal latitude, @Param("longitude") java.math.BigDecimal longitude, @Param("limit") Integer limit);
+
+    /**
+     * 获取同城用户
+     */
+    List<User> findSameCityUsers(@Param("userId") Long userId, @Param("city") String city, @Param("limit") Integer limit);
 }

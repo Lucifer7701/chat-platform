@@ -10,6 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -146,6 +149,54 @@ public class UserService {
             log.info("异步处理注册后任务：userId={}", userId);
         } catch (Exception e) {
             log.error("异步处理注册后任务失败：userId={}", userId, e);
+        }
+    }
+
+    /**
+     * 更新用户位置
+     */
+    public int updateUserLocation(Long userId, BigDecimal latitude, BigDecimal longitude) {
+        try {
+            return userMapper.updateLocation(userId, latitude, longitude);
+        } catch (Exception e) {
+            log.error("更新用户位置失败：userId={}", userId, e);
+            return 0;
+        }
+    }
+
+    /**
+     * 获取附近用户
+     */
+    public List<User> findNearbyUsers(Long userId, BigDecimal latitude, BigDecimal longitude, Integer limit) {
+        try {
+            return userMapper.findNearbyUsers(userId, latitude, longitude, limit);
+        } catch (Exception e) {
+            log.error("获取附近用户失败：userId={}", userId, e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 获取同城用户
+     */
+    public List<User> findSameCityUsers(Long userId, String city, Integer limit) {
+        try {
+            return userMapper.findSameCityUsers(userId, city, limit);
+        } catch (Exception e) {
+            log.error("获取同城用户失败：userId={}", userId, e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 更新用户资料
+     */
+    public int updateUserProfile(User user) {
+        try {
+            return userMapper.updateById(user);
+        } catch (Exception e) {
+            log.error("更新用户资料失败：userId={}", user.getId(), e);
+            return 0;
         }
     }
 }

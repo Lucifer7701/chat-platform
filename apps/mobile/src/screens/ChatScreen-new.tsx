@@ -277,7 +277,7 @@ export default function ChatScreen({ route }: Props) {
   const MessageItem = ({ item }: { item: Msg }) => {
     const isOwnMessage = currentUser && item.fromUserId === currentUser.id;
     const user = isOwnMessage ? currentUser : contactUser;
-    const avatarSource = undefined; // 使用Avatar组件，不再手动构造source
+    const avatarSource = undefined;
 
     return (
       <View style={[

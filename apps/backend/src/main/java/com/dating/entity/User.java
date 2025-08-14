@@ -1,6 +1,7 @@
 package com.dating.entity;
 
 import lombok.Data;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -18,6 +19,8 @@ public class User {
     private String introduction;
     private Integer status; // 1正常 2冻结 3注销
     private Integer realNameVerified;
+    private BigDecimal latitude; // 纬度
+    private BigDecimal longitude; // 经度
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

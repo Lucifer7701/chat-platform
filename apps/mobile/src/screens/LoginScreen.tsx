@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
+// 条件导入 expo-location，避免Web端问题
+const Location = Platform.OS !== 'web' ? require('expo-location') : null;
 import { post } from '../utils/api';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
@@ -13,18 +16,58 @@ export default function LoginScreen({ navigation }: Props) {
 
   const onLogin = async () => {
     try {
+      // 1. 先进行登录
       const json = await post<any>('/api/user/login', { phone, password });
       if (json.code !== 200) {
         Alert.alert('登录失败', json.message || '');
         return;
       }
+      
       const token = json.extraData?.token;
       if (token) {
         await AsyncStorage.setItem('token', token);
+        
+        // 2. 获取并更新位置
+        await updateLocation(token);
+        
+        // 3. 跳转到主页面
+        navigation.replace('MainTabs');
       }
-      navigation.replace('ChatList');
     } catch (e) {
       Alert.alert('错误', '登录失败');
+    }
+  };
+
+  const updateLocation = async (token: string) => {
+    // Web端跳过位置获取
+    if (Platform.OS === 'web' || !Location) {
+      console.log('Web端跳过位置获取');
+      return;
+    }
+
+    try {
+      // 请求位置权限
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('提示', '位置权限被拒绝，将无法使用附近推荐功能');
+        return;
+      }
+
+      // 获取当前位置
+      let location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      // 更新位置到服务器
+      await post('/api/user/update-location', {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude
+      }, token);
+
+      console.log('位置更新成功');
+    } catch (e) {
+      console.log('位置更新失败:', e);
+      // 位置更新失败不阻止登录流程
     }
   };
 

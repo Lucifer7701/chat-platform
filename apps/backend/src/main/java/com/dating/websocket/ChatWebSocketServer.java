@@ -114,6 +114,7 @@ public class ChatWebSocketServer {
             // 获取发送者ID
             Long fromUserId = getUserIdBySession(session);
             if (fromUserId == null) {
+                sendErrorResponse(session, request.getTempId(), "用户未登录");
                 return;
             }
 
@@ -125,28 +126,86 @@ public class ChatWebSocketServer {
             chatMessage.setContent(request.getContent());
             chatMessage.setMediaUrl(request.getMediaUrl());
 
-            chatService.saveMessage(chatMessage);
+            ChatMessage savedMessage = chatService.saveMessage(chatMessage);
 
-            // 发送给接收者
+            // 1. 发送ACK确认给发送者
+            sendAckResponse(session, request.getTempId(), savedMessage);
+
+            // 2. 发送消息给接收者
             Session toUserSession = onlineStatusService.getUserSession(request.getToUserId());
             if (toUserSession != null && toUserSession.isOpen()) {
-                ChatMessageResponse response = new ChatMessageResponse();
-                response.setFromUserId(fromUserId);
-                response.setToUserId(request.getToUserId());
-                response.setMessageType(request.getMessageType());
-                response.setContent(request.getContent());
-                response.setMediaUrl(request.getMediaUrl());
-                response.setCreatedAt(chatMessage.getCreatedAt());
-
-                // 使用Jackson序列化响应（异步发送）
-                String responseJson = objectMapper.writeValueAsString(response);
-                toUserSession.getAsyncRemote().sendText(responseJson);
+                sendMessageToReceiver(toUserSession, savedMessage);
             }
 
             log.info("消息发送成功：{} -> {}", fromUserId, request.getToUserId());
 
         } catch (Exception e) {
             log.error("处理WebSocket消息异常", e);
+            sendErrorResponse(session, null, "消息发送失败");
+        }
+    }
+
+    /**
+     * 发送ACK确认给发送者
+     */
+    private void sendAckResponse(Session session, String tempId, ChatMessage message) {
+        try {
+            ChatMessageResponse ackResponse = new ChatMessageResponse();
+            ackResponse.setType("ack");
+            ackResponse.setTempId(tempId);
+            ackResponse.setId(message.getId());
+            ackResponse.setFromUserId(message.getFromUserId());
+            ackResponse.setToUserId(message.getToUserId());
+            ackResponse.setMessageType(message.getMessageType());
+            ackResponse.setContent(message.getContent());
+            ackResponse.setMediaUrl(message.getMediaUrl());
+            ackResponse.setCreatedAt(message.getCreatedAt());
+            
+            String responseJson = objectMapper.writeValueAsString(ackResponse);
+            session.getAsyncRemote().sendText(responseJson);
+        } catch (Exception e) {
+            log.error("发送ACK响应失败", e);
+        }
+    }
+
+    /**
+     * 发送消息给接收者
+     */
+    private void sendMessageToReceiver(Session toUserSession, ChatMessage message) {
+        try {
+            ChatMessageResponse response = new ChatMessageResponse();
+            response.setType("message");
+            response.setId(message.getId());
+            response.setFromUserId(message.getFromUserId());
+            response.setToUserId(message.getToUserId());
+            response.setMessageType(message.getMessageType());
+            response.setContent(message.getContent());
+            response.setMediaUrl(message.getMediaUrl());
+            response.setCreatedAt(message.getCreatedAt());
+            
+            String responseJson = objectMapper.writeValueAsString(response);
+            toUserSession.getAsyncRemote().sendText(responseJson);
+        } catch (Exception e) {
+            log.error("发送消息给接收者失败", e);
+        }
+    }
+
+    /**
+     * 发送错误响应
+     */
+    private void sendErrorResponse(Session session, String tempId, String errorMsg) {
+        try {
+            if (session == null || !session.isOpen()) return;
+            
+            ChatMessageResponse errorResponse = new ChatMessageResponse();
+            errorResponse.setType("error");
+            errorResponse.setTempId(tempId);
+            errorResponse.setContent(errorMsg);
+            
+            String responseJson = objectMapper.writeValueAsString(errorResponse);
+            session.getAsyncRemote().sendText(responseJson);
+        } catch (Exception e) {
+            log.error("发送错误响应失败", e);
         }
     }
 

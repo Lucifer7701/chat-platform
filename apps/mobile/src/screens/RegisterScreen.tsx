@@ -34,7 +34,7 @@ export default function RegisterScreen({ navigation }: Props) {
       const token = json.extraData?.token;
       if (token) {
         await AsyncStorage.setItem('token', token);
-        navigation.replace('ChatList');
+        navigation.replace('MainTabs');
         return;
       }
       // 兼容未返回 token 的情况
