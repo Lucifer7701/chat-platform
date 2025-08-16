@@ -2,6 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Alert, TextInput, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE, get, post } from '../utils/api';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../App';
+import Avatar from '../components/Avatar';
 
 type User = {
   id: number;
@@ -14,7 +18,10 @@ type User = {
   gender: number;
 };
 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 export default function ProfileScreen() {
+  const navigation = useNavigation<NavigationProp>();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -76,10 +83,6 @@ export default function ProfileScreen() {
     }
   };
 
-  const getDefaultAvatar = (gender: number) => {
-    return `${API_BASE}/default/avatar_${gender === 1 ? 'male' : 'female'}.png`;
-  };
-
   if (loading) {
     return (
       <View style={styles.container}>
@@ -101,15 +104,18 @@ export default function ProfileScreen() {
       {/* 头部信息 */}
       <View style={styles.header}>
         <View style={styles.avatarContainer}>
-          <Image
-            source={{
-              uri: user.avatar?.startsWith('http')
-                ? user.avatar
-                : getDefaultAvatar(user.gender)
-            }}
-            style={styles.avatar}
+          <Avatar 
+            avatar={user.avatar} 
+            gender={user.gender} 
+            size={80} 
           />
-          <TouchableOpacity style={styles.avatarEditButton}>
+          <TouchableOpacity 
+            style={styles.avatarEditButton}
+            onPress={() => navigation.navigate('AvatarEdit', {
+              currentAvatar: user.avatar,
+              gender: user.gender
+            })}
+          >
             <Text style={styles.avatarEditText}>编辑</Text>
           </TouchableOpacity>
         </View>

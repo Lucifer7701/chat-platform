@@ -2,59 +2,44 @@ import React from 'react';
 import { View, Image, Text, StyleSheet, ImageSourcePropType, ViewStyle, ImageStyle } from 'react-native';
 import { API_BASE } from '../utils/api';
 
+// 导入默认头像
+const boyAvatarDefault = require('../../assets/boy_avatar_default.png');
+const girlAvatarDefault = require('../../assets/girl_avatar_default.png');
+
 type Props = {
   avatar?: string | null;
   gender?: number; // 1 男, 2 女
   size?: number; // 默认40
-  style?: ViewStyle | ImageStyle;
+  style?: ImageStyle;
 };
 
 export default function Avatar({ avatar, gender = 1, size = 40, style }: Props) {
   const borderRadius = size / 2;
-  const source = resolveSource(avatar);
-
-  if (source) {
-    return (
-      <Image
-        source={source}
-        style={{ width: size, height: size, borderRadius }}
-      />
-    );
-  }
-
-  const backgroundColor = gender === 2 ? '#E91E63' : '#4A90E2';
-  const text = gender === 2 ? '女' : '男';
+  const source = resolveSource(avatar, gender);
 
   return (
-    <View
-      style={[
-        styles.circle,
-        { width: size, height: size, borderRadius, backgroundColor },
-        style,
-      ]}
-    >
-      <Text style={styles.text}>{text}</Text>
-    </View>
+    <Image
+      source={source}
+      style={[{ width: size, height: size, borderRadius }, style]}
+      onError={(error) => {
+        console.log('Avatar加载失败:', error);
+      }}
+    />
   );
 }
 
-function resolveSource(avatar?: string | null): ImageSourcePropType | undefined {
-  if (!avatar) return undefined;
-  if (avatar.startsWith('http')) return { uri: avatar };
-  if (avatar.startsWith('/')) return { uri: `${API_BASE}${avatar}` };
-  return { uri: avatar };
+function resolveSource(avatar?: string | null, gender: number = 1): ImageSourcePropType {
+  // 如果有自定义头像，使用自定义头像
+  if (avatar && !avatar.includes('avatar_default.png')) {
+    if (avatar.startsWith('http')) return { uri: avatar };
+    if (avatar.startsWith('/')) return { uri: `${API_BASE}${avatar}` };
+    return { uri: avatar };
+  }
+  
+  // 没有头像或是默认头像路径时，使用前端assets中的默认头像
+  return gender === 2 ? girlAvatarDefault : boyAvatarDefault;
 }
 
-const styles = StyleSheet.create({
-  circle: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  text: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-});
+// 不再需要样式，因为现在总是使用Image组件
 
 

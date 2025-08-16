@@ -4,7 +4,7 @@ package com.dating.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import javax.websocket.Session;
+import jakarta.websocket.Session;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;

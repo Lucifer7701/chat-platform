@@ -7,12 +7,14 @@ import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import MainTabs from './navigation/MainTabs';
 import ChatScreen from './screens/ChatScreen';
+import AvatarEditScreen from './screens/AvatarEditScreen';
 
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   MainTabs: undefined;
   Chat: { toUserId: number };
+  AvatarEdit: { currentAvatar?: string; gender?: number };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -41,6 +43,11 @@ export default function App() {
             name="Chat" 
             component={ChatScreen} 
             options={{ title: '聊天' }}
+          />
+          <Stack.Screen 
+            name="AvatarEdit" 
+            component={AvatarEditScreen} 
+            options={{ title: '编辑头像' }}
           />
         </Stack.Navigator>
       </NavigationContainer>

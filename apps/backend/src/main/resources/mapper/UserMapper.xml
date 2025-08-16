@@ -97,7 +97,7 @@
         SELECT
             id, phone, username, nickname, avatar, gender,
             birthday, city, profession, introduction,
-            status, real_name_verified, created_at, updated_at
+            status, real_name_verified, created_at, updated_at,latitude,longitude
         FROM users
         WHERE id = #{id}
     </select>

@@ -199,4 +199,19 @@ public class UserService {
             return 0;
         }
     }
+
+    /**
+     * 更新用户头像
+     */
+    public boolean updateUserAvatar(Long userId, String avatarUrl) {
+        try {
+            User user = new User();
+            user.setId(userId);
+            user.setAvatar(avatarUrl);
+            return userMapper.updateById(user) > 0;
+        } catch (Exception e) {
+            log.error("更新用户头像失败：userId={}, avatarUrl={}", userId, avatarUrl, e);
+            return false;
+        }
+    }
 }

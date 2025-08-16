@@ -112,7 +112,7 @@ export default function ChatScreen({ route }: Props) {
           createdAt: msg.createdAt,
           status: 'received' as const,
         }));
-        setMessages(historyMessages.reverse()); // 最新消息在底部
+        setMessages(historyMessages); // 按时间正序排列，最新消息在底部
       }
     } catch (e) {
       console.log('加载聊天历史失败:', e);
@@ -275,48 +275,55 @@ export default function ChatScreen({ route }: Props) {
   };
 
   const MessageItem = ({ item }: { item: Msg }) => {
-    const isOwnMessage = currentUser && item.fromUserId === currentUser.id;
+    // 修复数据类型匹配问题
+    const isOwnMessage = currentUser && String(item.fromUserId) === String(currentUser.id);
     const user = isOwnMessage ? currentUser : contactUser;
-    const avatarSource = undefined; // 使用Avatar组件，不再手动构造source
 
-    return (
-      <View style={[
-        styles.messageContainer,
-        isOwnMessage ? styles.ownMessageContainer : styles.otherMessageContainer
-      ]}>
-        {!isOwnMessage && (
-          <Avatar avatar={user?.avatar} gender={user?.gender} size={40} />
-        )}
-        
-        <View style={[
-          styles.messageBubble,
-          isOwnMessage ? styles.ownBubble : styles.otherBubble
-        ]}>
-          <Text style={[
-            styles.messageText,
-            isOwnMessage ? styles.ownText : styles.otherText
-          ]}>
-            {item.content}
-          </Text>
-        </View>
-
-        {isOwnMessage && (
-          <>
+    if (isOwnMessage) {
+      // 自己的消息：右对齐，头像在右侧
+      return (
+        <View style={styles.ownMessageRow}>
+          <View style={styles.ownMessageContent}>
             <MessageStatusIndicator status={item.status} />
-            <Avatar avatar={user?.avatar} gender={user?.gender} size={40} />
-          </>
-        )}
-
-        {item.status === 'failed' && (
-          <TouchableOpacity 
-            style={styles.retryButton} 
-            onPress={() => retryMessage(item)}
-          >
-            <Text style={styles.retryText}>重发</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    );
+            <View style={styles.ownBubble}>
+              <Text style={styles.ownText}>{item.content}</Text>
+            </View>
+          </View>
+          <View style={styles.ownAvatarContainer}>
+            <Avatar 
+              avatar={currentUser?.avatar} 
+              gender={currentUser?.gender} 
+              size={40} 
+            />
+          </View>
+          
+          {item.status === 'failed' && (
+            <TouchableOpacity 
+              style={styles.retryButton} 
+              onPress={() => retryMessage(item)}
+            >
+              <Text style={styles.retryText}>重发</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      );
+    } else {
+      // 对方的消息：左对齐，头像在左侧
+      return (
+        <View style={styles.otherMessageRow}>
+          <View style={styles.otherAvatarContainer}>
+            <Avatar 
+              avatar={user?.avatar} 
+              gender={user?.gender} 
+              size={40} 
+            />
+          </View>
+          <View style={styles.otherBubble}>
+            <Text style={styles.otherText}>{item.content}</Text>
+          </View>
+        </View>
+      );
+    }
   };
 
   if (loading) {
@@ -380,49 +387,81 @@ const styles = StyleSheet.create({
   messagesList: {
     padding: 10,
   },
-  messageContainer: {
+  // 自己的消息行样式
+  ownMessageRow: {
     flexDirection: 'row',
-    marginVertical: 4,
-    alignItems: 'flex-end',
-  },
-  ownMessageContainer: {
     justifyContent: 'flex-end',
+    alignItems: 'flex-end',
+    marginVertical: 4,
+    paddingHorizontal: 10,
   },
-  otherMessageContainer: {
-    justifyContent: 'flex-start',
+  ownMessageContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    maxWidth: '70%',
   },
-  avatar: {
+  ownAvatarContainer: {
+    marginLeft: 8,
     width: 40,
     height: 40,
-    borderRadius: 20,
-    marginHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
+  
+  // 对方的消息行样式
+  otherMessageRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+    marginVertical: 4,
+    paddingHorizontal: 10,
+  },
+  otherAvatarContainer: {
+    marginRight: 8,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  
+  // 消息气泡样式
   messageBubble: {
-    maxWidth: '70%',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 18,
     marginHorizontal: 4,
   },
   ownBubble: {
-    backgroundColor: '#1890ff',
+    backgroundColor: '#95EC69',
     borderBottomRightRadius: 4,
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    maxWidth: '100%',
   },
   otherBubble: {
     backgroundColor: '#fff',
     borderBottomLeftRadius: 4,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: '#e8e8e8',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    maxWidth: '70%',
   },
   messageText: {
     fontSize: 16,
-    lineHeight: 20,
+    lineHeight: 22,
   },
   ownText: {
-    color: '#fff',
+    color: '#000',
+    fontSize: 16,
+    lineHeight: 22,
   },
   otherText: {
     color: '#333',
+    fontSize: 16,
+    lineHeight: 22,
   },
   statusIndicator: {
     marginRight: 4,

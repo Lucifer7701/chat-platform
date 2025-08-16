@@ -49,3 +49,11 @@ file:
 logging:
   level:
     com.dating.mapper: debug
+
+# MinIO 配置
+minio:
+  endpoint: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin
+  bucket-name: dating-platform
+  public-read: true  # 开发环境true，生产环境false

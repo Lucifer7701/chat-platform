@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
-// 条件导入 expo-location，避免Web端问题
-const Location = Platform.OS !== 'web' ? require('expo-location') : null;
 import { post } from '../utils/api';
+import { getAndUpdateLocation } from '../utils/locationUtils';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 
@@ -39,32 +37,14 @@ export default function LoginScreen({ navigation }: Props) {
   };
 
   const updateLocation = async (token: string) => {
-    // Web端跳过位置获取
-    if (Platform.OS === 'web' || !Location) {
-      console.log('Web端跳过位置获取');
-      return;
-    }
-
     try {
-      // 请求位置权限
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('提示', '位置权限被拒绝，将无法使用附近推荐功能');
-        return;
+      const result = await getAndUpdateLocation(token);
+      if (result.success) {
+        console.log('位置更新成功');
+      } else {
+        console.log('位置更新失败:', result.message);
+        // 位置更新失败不阻止登录流程，用户可以在推荐页面重新授权
       }
-
-      // 获取当前位置
-      let location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-
-      // 更新位置到服务器
-      await post('/api/user/update-location', {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude
-      }, token);
-
-      console.log('位置更新成功');
     } catch (e) {
       console.log('位置更新失败:', e);
       // 位置更新失败不阻止登录流程

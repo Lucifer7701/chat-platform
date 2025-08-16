@@ -17,6 +17,9 @@ public class UserPhotoService {
 
     @Autowired
     private DataIntegrityService dataIntegrityService;
+    
+    @Autowired
+    private UserService userService;
 
     /**
      * 添加用户照片
@@ -68,6 +71,23 @@ public class UserPhotoService {
             return userPhotoMapper.setAsAvatar(photoId) > 0;
         } catch (Exception e) {
             throw new RuntimeException("设置头像失败", e);
+        }
+    }
+
+    /**
+     * 更新用户头像
+     */
+    @Transactional
+    public boolean updateUserAvatar(Long userId, String avatarUrl) {
+        if (!dataIntegrityService.validateUser(userId)) {
+            throw new IllegalArgumentException("用户不存在或状态异常");
+        }
+        
+        try {
+            // 更新用户表中的头像字段
+            return userService.updateUserAvatar(userId, avatarUrl);
+        } catch (Exception e) {
+            throw new RuntimeException("更新用户头像失败", e);
         }
     }
 
